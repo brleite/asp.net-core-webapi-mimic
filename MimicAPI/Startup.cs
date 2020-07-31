@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using MimicAPI.Database;
 
 namespace MimicAPI
 {
@@ -33,7 +35,9 @@ namespace MimicAPI
 
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            // Teste
+            services.AddDbContext<MimicContext>(options =>
+                options.UseMySql(Configuration.GetConnectionString("MimicContext"), builder =>
+                    builder.MigrationsAssembly("MimicAPI")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
