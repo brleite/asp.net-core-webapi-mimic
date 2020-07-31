@@ -73,9 +73,5 @@ namespace MimicAPI.Repositories
             _banco.Palavras.Update(palavra);
             _banco.SaveChanges();
         }
-
-        
-
-        
     }
 }
