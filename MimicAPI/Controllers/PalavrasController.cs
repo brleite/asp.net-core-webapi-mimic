@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MimicAPI.Database;
+using MimicAPI.Helpers;
 using MimicAPI.Models;
+using MimicAPI.Repositories.Contracts;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,19 +15,28 @@ namespace MimicAPI.Controllers
     [Route("api/palavras")]
     public class PalavrasController : ControllerBase
     {
-        private readonly MimicContext _banco;
+        private readonly IPalavraRepository _repository;
 
-        public PalavrasController(MimicContext banco)
+        public PalavrasController(IPalavraRepository repositorio)
         {
-            _banco = banco;
+            _repository = repositorio;
         }
 
-        // -- /api/palavras
+        // -- /api/palavras?data=2019-05-01
         [Route("")]
         [HttpGet]
-        public ActionResult ObterTodas()
+        public ActionResult ObterTodas([FromQuery] PalavraUrlQuery query)
         {
-            return Ok(_banco.Palavras); // Método do ControllerBase que converte para o modelo mais popular. No caso, JsonResult
+            var item = _repository.ObterPalavras(query);
+
+            if (query.PagNumero > item.Paginacao.TotalPaginas)
+            {
+                return NotFound();
+            }
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(item.Paginacao));
+
+            return Ok(item.ToList()); // Método do ControllerBase que converte para o modelo mais popular. No caso, JsonResult
         }
 
         // -- /api/palavras/1
@@ -31,7 +44,14 @@ namespace MimicAPI.Controllers
         [HttpGet]
         public ActionResult Obter(int id)
         {
-            return Ok(_banco.Palavras.Find(id));
+            var obj = _repository.Obter(id);
+
+            if (obj == null)
+            {
+                // return StatusCode(404);
+                return NotFound();
+            }
+            return Ok(obj);
         }
 
         // -- /api/palavras (POST: id, nome, ...)
@@ -39,10 +59,9 @@ namespace MimicAPI.Controllers
         [HttpPost]
         public ActionResult Cadastrar([FromBody] Palavra palavra)
         {
-            _banco.Palavras.Add(palavra);
-            _banco.SaveChanges();
+            _repository.Cadastrar(palavra);
 
-            return Ok();
+            return Created($"/api/palavras/{palavra.Id}", palavra);
         }
 
         // -- /api/palavras/1 (PUT: id, nome, ...)
@@ -50,9 +69,16 @@ namespace MimicAPI.Controllers
         [HttpPut]
         public ActionResult Atualizar(int id, [FromBody] Palavra palavra)
         {
+            var obj = _repository.Obter(id);
+            
+            if (obj == null)
+            {
+                // return StatusCode(404);
+                return NotFound();
+            }
+
             palavra.Id = id;
-            _banco.Palavras.Update(palavra);
-            _banco.SaveChanges();
+            _repository.Atualizar(palavra);            
 
             return Ok();
         }
@@ -62,13 +88,17 @@ namespace MimicAPI.Controllers
         [HttpDelete]
         public ActionResult Deletar(int id)
         {
-            var palavra = _banco.Palavras.Find(id);
-            palavra.Ativo = false;
-            // _banco.Palavras.Remove(_banco.Palavras.Find(id));
-            _banco.Palavras.Update(palavra);
-            _banco.SaveChanges();
-            
-            return Ok();
+            var palavra = _repository.Obter(id);
+
+            if (palavra == null)
+            {
+                // return StatusCode(404);
+                return NotFound();
+            }
+
+            _repository.Deletar(id);
+
+            return NoContent();
         }
     }
 }

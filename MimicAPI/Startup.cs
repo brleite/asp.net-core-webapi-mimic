@@ -11,6 +11,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using MimicAPI.Database;
+using MimicAPI.Repositories.Contracts;
+using MimicAPI.Repositories;
 
 namespace MimicAPI
 {
@@ -38,6 +40,8 @@ namespace MimicAPI
             services.AddDbContext<MimicContext>(options =>
                 options.UseMySql(Configuration.GetConnectionString("MimicContext"), builder =>
                     builder.MigrationsAssembly("MimicAPI")));
+
+            services.AddScoped<IPalavraRepository, PalavraRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -57,6 +61,9 @@ namespace MimicAPI
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+
+            // Inclui mensagem no retorno da requisição
+            app.UseStatusCodePages();
 
             app.UseMvc(routes =>
             {
