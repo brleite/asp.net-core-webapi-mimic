@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace MimicAPI.Controllers
 {
+    [Route("api/palavras")]
     public class PalavrasController : ControllerBase
     {
         private readonly MimicContext _banco;
@@ -17,34 +18,56 @@ namespace MimicAPI.Controllers
             _banco = banco;
         }
 
+        // -- /api/palavras
+        [Route("")]
+        [HttpGet]
         public ActionResult ObterTodas()
         {
             return Ok(_banco.Palavras); // Método do ControllerBase que converte para o modelo mais popular. No caso, JsonResult
         }
 
+        // -- /api/palavras/1
+        [Route("{id}")]
+        [HttpGet]
         public ActionResult Obter(int id)
         {
             return Ok(_banco.Palavras.Find(id));
         }
 
-        public ActionResult Cadastrar(Palavra palavra)
+        // -- /api/palavras (POST: id, nome, ...)
+        [Route("")]
+        [HttpPost]
+        public ActionResult Cadastrar([FromBody] Palavra palavra)
         {
             _banco.Palavras.Add(palavra);
+            _banco.SaveChanges();
 
             return Ok();
         }
 
-        public ActionResult Atualizar(Palavra palavra)
+        // -- /api/palavras/1 (PUT: id, nome, ...)
+        [Route("{id}")]
+        [HttpPut]
+        public ActionResult Atualizar(int id, [FromBody] Palavra palavra)
         {
+            palavra.Id = id;
             _banco.Palavras.Update(palavra);
+            _banco.SaveChanges();
 
             return Ok();
         }
 
+        // -- /api/palavras/1 (DELETE)
+        [Route("{id}")]
+        [HttpDelete]
         public ActionResult Deletar(int id)
         {
-            _banco.Palavras.Remove(_banco.Palavras.Find(id));
-
+            var palavra = _banco.Palavras.Find(id);
+            palavra.Ativo = false;
+            // _banco.Palavras.Remove(_banco.Palavras.Find(id));
+            _banco.Palavras.Update(palavra);
+            _banco.SaveChanges();
+            
             return Ok();
         }
     }
