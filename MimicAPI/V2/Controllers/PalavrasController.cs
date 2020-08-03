@@ -14,6 +14,11 @@ namespace MimicAPI.V2.Controllers
     [ApiVersion("2.0")]
     public class PalavrasController : ControllerBase
     {
+        /// <summary>
+        /// Operação que retorna do banco de dados todas as palabras existentes
+        /// </summary>
+        /// <param name="query">Filtros de pesquisa</param>
+        /// <returns>Listagem de palavras</returns>
         [HttpGet]
         public string ObterTodas()
         {

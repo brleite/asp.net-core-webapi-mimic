@@ -16,6 +16,10 @@ using MimicAPI.V1.Repositories;
 using AutoMapper;
 using MimicAPI.Helpers;
 using Microsoft.AspNetCore.Mvc.Versioning;
+using MimicAPI.Helpers.Swagger;
+using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.Extensions.PlatformAbstractions;
+using System.IO;
 
 namespace MimicAPI
 {
@@ -50,6 +54,15 @@ namespace MimicAPI
             #endregion
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            /*
+            services.AddMvc(options =>
+            {
+                options.Filters.Add(new ConsumesAttribute("application/json"));
+                options.Filters.Add(new ProducesAttribute("application/json"));
+            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            */
+
             services.AddDbContext<MimicContext>(options =>
                 options.UseMySql(Configuration.GetConnectionString("MimicContext"), builder =>
                     builder.MigrationsAssembly("MimicAPI")));
@@ -61,6 +74,49 @@ namespace MimicAPI
                 // cfg.ApiVersionReader = new HeaderApiVersionReader("api-version");
                 cfg.AssumeDefaultVersionWhenUnspecified = true;
                 cfg.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
+            });
+
+            services.AddSwaggerGen(cfg =>
+            {
+                // Resolve conflito de controllers com a mesma rota e mesmo nome. Comum no caso de versionamento de APIs
+                cfg.ResolveConflictingActions(apiDescription => apiDescription.First());
+                cfg.SwaggerDoc("v2.0", new Info()
+                {
+                    Title = "MimicAPI - V2.0",
+                    Version = "v2.0"
+                });
+                cfg.SwaggerDoc("v1.1", new Info()
+                {
+                    Title = "MimicAPI - V1.1",
+                    Version = "v1.1"
+                });
+                cfg.SwaggerDoc("v1.0", new Info()
+                {
+                    Title = "MimicAPI - V1.0",
+                    Version = "v1.0"
+                });
+
+                var caminhoProjeto = PlatformServices.Default.Application.ApplicationBasePath;
+                var nomeProjeto = $"{PlatformServices.Default.Application.ApplicationName}.xml";
+                var caminhoArquivoXmlComentario = Path.Combine(caminhoProjeto, nomeProjeto);
+
+                cfg.IncludeXmlComments(caminhoArquivoXmlComentario);
+                cfg.DocInclusionPredicate((docName, apiDesc) =>
+                {
+                    var actionApiVersionModel = apiDesc.ActionDescriptor?.GetApiVersion();
+                    // would mean this action is unversioned and should be included everywhere
+                    if (actionApiVersionModel == null)
+                    {
+                        return true;
+                    }
+                    if (actionApiVersionModel.DeclaredApiVersions.Any())
+                    {
+                        return actionApiVersionModel.DeclaredApiVersions.Any(v => $"v{v.ToString()}" == docName);
+                    }
+                    return actionApiVersionModel.ImplementedApiVersions.Any(v => $"v{v.ToString()}" == docName);
+                });
+                cfg.OperationFilter<ApiVersionOperationFilter>();
+
             });
         }
 
@@ -90,6 +146,15 @@ namespace MimicAPI
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
+            });
+
+            app.UseSwagger(); //swagger/v1/swagger.json - Parâmetro RouteTemplate
+            app.UseSwaggerUI(cfg =>
+            {
+                cfg.SwaggerEndpoint("/swagger/v2.0/swagger.json", "MimicAPI v2.0");
+                cfg.SwaggerEndpoint("/swagger/v1.1/swagger.json", "MimicAPI v1.1");
+                cfg.SwaggerEndpoint("/swagger/v1.0/swagger.json", "MimicAPI v1.0");
+                // cfg.RoutePrefix = String.Empty; // Ao acessar o servidor, já é encaminhado automaticamente para o swagger
             });
         }
     }

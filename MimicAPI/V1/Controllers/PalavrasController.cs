@@ -32,6 +32,12 @@ namespace MimicAPI.V1.Controllers
             _mapper = mapper;
         }
 
+
+        /// <summary>
+        /// Operação que retorna do banco de dados todas as palabras existentes
+        /// </summary>
+        /// <param name="query">Filtros de pesquisa</param>
+        /// <returns>Listagem de palavras</returns>
         // -- /api/palavras?data=2019-05-01
         // [Route("")]
         [MapToApiVersion("1.0")]
@@ -58,39 +64,11 @@ namespace MimicAPI.V1.Controllers
             return Ok(lista); // Método do ControllerBase que converte para o modelo mais popular. No caso, JsonResult
         }
 
-        private PaginationList<PalavraDTO> CriarLinksListPalavraDTO(PalavraUrlQuery query, PaginationList<Palavra> item)
-        {
-            var lista = _mapper.Map<PaginationList<Palavra>, PaginationList<PalavraDTO>>(item);
-
-            foreach (var palavra in lista.Results)
-            {
-                palavra.Links = new List<LinkDTO>();
-                palavra.Links.Add(new LinkDTO("self", Url.Link("ObterPalavra", new { id = palavra.Id }), "GET"));
-            }
-
-            lista.Links.Add(new LinkDTO("self", Url.Link("ObterTodas", query), "GET"));
-
-            if (item.Paginacao != null)
-            {
-                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(item.Paginacao));
-
-                if (query.PagNumero + 1 <= item.Paginacao.TotalPaginas)
-                {
-                    var queryString = new PalavraUrlQuery() { PagNumero = query.PagNumero + 1, PagRegistro = query.PagRegistro, Data = query.Data };
-
-                    lista.Links.Add(new LinkDTO("next", Url.Link("ObterTodas", queryString), "GET"));
-                }
-                if (query.PagNumero - 1 > 0)
-                {
-                    var queryString = new PalavraUrlQuery() { PagNumero = query.PagNumero - 1, PagRegistro = query.PagRegistro, Data = query.Data };
-
-                    lista.Links.Add(new LinkDTO("prev", Url.Link("ObterTodas", queryString), "GET"));
-                }
-            }
-
-            return lista;
-        }
-
+        /// <summary>
+        /// Operação que retorna uma única palavra do banco de dados
+        /// </summary>
+        /// <param name="id">Identificador da palavra</param>
+        /// <returns>Um objeto de palavra</returns>
         // -- /api/palavras/1
         // [Route("{id}")]
         [MapToApiVersion("1.0")]
@@ -122,6 +100,11 @@ namespace MimicAPI.V1.Controllers
             return Ok(palavraDTO);
         }
 
+        /// <summary>
+        /// Operação que realiza o cadastro da palavra
+        /// </summary>
+        /// <param name="palavra">Um objeto palavra</param>
+        /// <returns>Um objeto palavra com seu Id</returns>
         // -- /api/palavras (POST: id, nome, ...)
         [MapToApiVersion("1.0")]
         [MapToApiVersion("1.1")]
@@ -152,6 +135,12 @@ namespace MimicAPI.V1.Controllers
             return Created($"/api/palavras/{palavra.Id}", palavraDTO);
         }
 
+        /// <summary>
+        /// Operação que realiza a substituição de dados de uma palavra específica
+        /// </summary>
+        /// <param name="id">Identificador da palavra a ser alterada</param>
+        /// <param name="palavra">Objeto palavra com dados para alteração</param>
+        /// <returns></returns>
         // -- /api/palavras/1 (PUT: id, nome, ...)
         // [Route("{id}")]
         [MapToApiVersion("1.0")]
@@ -191,6 +180,11 @@ namespace MimicAPI.V1.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Operação de desativa uma palavra do sistema
+        /// </summary>
+        /// <param name="id">Identificador da palavra</param>
+        /// <returns></returns>
         // -- /api/palavras/1 (DELETE)
         [MapToApiVersion("1.1")]
         // [Route("{id}")]
@@ -208,6 +202,39 @@ namespace MimicAPI.V1.Controllers
             _repository.Deletar(id);
 
             return NoContent();
+        }
+
+        private PaginationList<PalavraDTO> CriarLinksListPalavraDTO(PalavraUrlQuery query, PaginationList<Palavra> item)
+        {
+            var lista = _mapper.Map<PaginationList<Palavra>, PaginationList<PalavraDTO>>(item);
+
+            foreach (var palavra in lista.Results)
+            {
+                palavra.Links = new List<LinkDTO>();
+                palavra.Links.Add(new LinkDTO("self", Url.Link("ObterPalavra", new { id = palavra.Id }), "GET"));
+            }
+
+            lista.Links.Add(new LinkDTO("self", Url.Link("ObterTodas", query), "GET"));
+
+            if (item.Paginacao != null)
+            {
+                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(item.Paginacao));
+
+                if (query.PagNumero + 1 <= item.Paginacao.TotalPaginas)
+                {
+                    var queryString = new PalavraUrlQuery() { PagNumero = query.PagNumero + 1, PagRegistro = query.PagRegistro, Data = query.Data };
+
+                    lista.Links.Add(new LinkDTO("next", Url.Link("ObterTodas", queryString), "GET"));
+                }
+                if (query.PagNumero - 1 > 0)
+                {
+                    var queryString = new PalavraUrlQuery() { PagNumero = query.PagNumero - 1, PagRegistro = query.PagRegistro, Data = query.Data };
+
+                    lista.Links.Add(new LinkDTO("prev", Url.Link("ObterTodas", queryString), "GET"));
+                }
+            }
+
+            return lista;
         }
     }
 }
