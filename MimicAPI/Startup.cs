@@ -13,6 +13,8 @@ using Microsoft.EntityFrameworkCore;
 using MimicAPI.Database;
 using MimicAPI.Repositories.Contracts;
 using MimicAPI.Repositories;
+using AutoMapper;
+using MimicAPI.Helpers;
 
 namespace MimicAPI
 {
@@ -24,6 +26,7 @@ namespace MimicAPI
         }
 
         public IConfiguration Configuration { get; }
+        public Profile DTOMapperProfile { get; private set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -35,6 +38,15 @@ namespace MimicAPI
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
+            #region AutoMapper-Config
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile(new DTOMapperProfile());
+            });
+            IMapper mapper = config.CreateMapper();
+
+            services.AddSingleton(mapper);
+            #endregion
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             services.AddDbContext<MimicContext>(options =>
