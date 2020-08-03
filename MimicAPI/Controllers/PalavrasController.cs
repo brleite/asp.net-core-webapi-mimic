@@ -98,7 +98,6 @@ namespace MimicAPI.Controllers
             }
 
             PalavraDTO palavraDTO = _mapper.Map<Palavra, PalavraDTO>(obj);
-            palavraDTO.Links = new List<LinkDTO>();
             palavraDTO.Links.Add(
                 new LinkDTO("self", Url.Link("ObterPalavra", new { id = palavraDTO.Id }), "GET")
             );
@@ -118,9 +117,27 @@ namespace MimicAPI.Controllers
         [HttpPost]
         public ActionResult Cadastrar([FromBody] Palavra palavra)
         {
+            if (palavra == null)
+            {
+                return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return UnprocessableEntity(ModelState);
+            }
+
+            palavra.Ativo = true;
+            palavra.Criado = DateTime.Now;
+            
             _repository.Cadastrar(palavra);
 
-            return Created($"/api/palavras/{palavra.Id}", palavra);
+            PalavraDTO palavraDTO = _mapper.Map<Palavra, PalavraDTO>(palavra);
+            palavraDTO.Links.Add(
+                new LinkDTO("self", Url.Link("ObterPalavra", new { id = palavraDTO.Id }), "GET")
+            );
+
+            return Created($"/api/palavras/{palavra.Id}", palavraDTO);
         }
 
         // -- /api/palavras/1 (PUT: id, nome, ...)
@@ -136,8 +153,26 @@ namespace MimicAPI.Controllers
                 return NotFound();
             }
 
+            if (palavra == null)
+            {
+                return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return UnprocessableEntity(ModelState);
+            }
+
             palavra.Id = id;
+            palavra.Ativo = obj.Ativo;
+            palavra.Criado = obj.Criado;
+            palavra.Criado = DateTime.Now;
             _repository.Atualizar(palavra);
+
+            PalavraDTO palavraDTO = _mapper.Map<Palavra, PalavraDTO>(palavra);
+            palavraDTO.Links.Add(
+                new LinkDTO("self", Url.Link("ObterPalavra", new { id = palavraDTO.Id }), "GET")
+            );
 
             return Ok();
         }
