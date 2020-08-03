@@ -1,6 +1,6 @@
 using System;
 
-namespace MimicAPI.Models
+namespace MimicAPI.V1.Models
 {
     public class ErrorViewModel
     {

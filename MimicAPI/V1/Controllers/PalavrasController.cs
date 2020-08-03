@@ -3,18 +3,24 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MimicAPI.Database;
 using MimicAPI.Helpers;
-using MimicAPI.Models;
-using MimicAPI.Models.DTO;
-using MimicAPI.Repositories.Contracts;
+using MimicAPI.V1.Models;
+using MimicAPI.V1.Models.DTO;
+using MimicAPI.V1.Repositories.Contracts;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MimicAPI.Controllers
+namespace MimicAPI.V1.Controllers
 {
-    [Route("api/palavras")]
+    // api/v1.0/palavras
+
+    [ApiController]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    // [Route("api/[controller]")]
+    [ApiVersion("1.0", Deprecated = true)]
+    [ApiVersion("1.1", Deprecated = true)]
     public class PalavrasController : ControllerBase
     {
         private readonly IPalavraRepository _repository;
@@ -28,6 +34,8 @@ namespace MimicAPI.Controllers
 
         // -- /api/palavras?data=2019-05-01
         // [Route("")]
+        [MapToApiVersion("1.0")]
+        [MapToApiVersion("1.1")]
         [HttpGet("", Name = "ObterTodas")]
         public ActionResult ObterTodas([FromQuery] PalavraUrlQuery query)
         {
@@ -85,6 +93,8 @@ namespace MimicAPI.Controllers
 
         // -- /api/palavras/1
         // [Route("{id}")]
+        [MapToApiVersion("1.0")]
+        [MapToApiVersion("1.1")]
         // Utilizar a rota {id} diretamente no HttpGet resolve o problema do parâmetro id na construção dinâmica do link em PalavraDTO.
         [HttpGet("{id}", Name = "ObterPalavra")]
         public ActionResult Obter(int id)
@@ -113,6 +123,8 @@ namespace MimicAPI.Controllers
         }
 
         // -- /api/palavras (POST: id, nome, ...)
+        [MapToApiVersion("1.0")]
+        [MapToApiVersion("1.1")]
         [Route("")]
         [HttpPost]
         public ActionResult Cadastrar([FromBody] Palavra palavra)
@@ -142,6 +154,8 @@ namespace MimicAPI.Controllers
 
         // -- /api/palavras/1 (PUT: id, nome, ...)
         // [Route("{id}")]
+        [MapToApiVersion("1.0")]
+        [MapToApiVersion("1.1")]
         [HttpPut("{id}", Name = "AtualizarPalavra")]
         public ActionResult Atualizar(int id, [FromBody] Palavra palavra)
         {
@@ -178,6 +192,7 @@ namespace MimicAPI.Controllers
         }
 
         // -- /api/palavras/1 (DELETE)
+        [MapToApiVersion("1.1")]
         // [Route("{id}")]
         [HttpDelete("{id}", Name = "ExcluirPalavra")]
         public ActionResult Deletar(int id)
