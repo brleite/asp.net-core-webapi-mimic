@@ -60,7 +60,7 @@ namespace MimicAPI
             {
                 options.Filters.Add(new ConsumesAttribute("application/json"));
                 options.Filters.Add(new ProducesAttribute("application/json"));
-            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_2); 
             */
 
             services.AddDbContext<MimicContext>(options =>
